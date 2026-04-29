@@ -7,9 +7,9 @@ import { getCurrentUser, useAppStore } from '@/src/store/useAppStore';
 export default function OnboardingScreen() {
   const session = useAppStore((s) => s.session);
   const user = useAppStore((s) => getCurrentUser(s));
-  const companies = useAppStore((s) => s.entities.companies.allIds.map((id) => s.entities.companies.byId[id]).filter(Boolean));
-  const positionsAll = useAppStore((s) => s.entities.positions.allIds.map((id) => s.entities.positions.byId[id]).filter(Boolean));
-  const skillsAll = useAppStore((s) => s.entities.skills.allIds.map((id) => s.entities.skills.byId[id]).filter(Boolean));
+  const companiesEntity = useAppStore((s) => s.entities.companies);
+  const positionsEntity = useAppStore((s) => s.entities.positions);
+  const skillsEntity = useAppStore((s) => s.entities.skills);
 
   const [companyId, setCompanyId] = useState<string>('');
   const [positionId, setPositionId] = useState<string>('');
@@ -26,6 +26,18 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (user && user.companyId && user.positionId) router.replace('/(tabs)');
   }, [user]);
+
+  const companies = useMemo(() => {
+    return companiesEntity.allIds.map((id) => companiesEntity.byId[id]).filter(Boolean);
+  }, [companiesEntity]);
+
+  const positionsAll = useMemo(() => {
+    return positionsEntity.allIds.map((id) => positionsEntity.byId[id]).filter(Boolean);
+  }, [positionsEntity]);
+
+  const skillsAll = useMemo(() => {
+    return skillsEntity.allIds.map((id) => skillsEntity.byId[id]).filter(Boolean);
+  }, [skillsEntity]);
 
   const positions = useMemo(() => positionsAll.filter((p) => p.companyId === companyId), [companyId, positionsAll]);
   const skills = useMemo(() => skillsAll.filter((s) => s.positionId === positionId), [positionId, skillsAll]);
@@ -109,4 +121,3 @@ export default function OnboardingScreen() {
     </View>
   );
 }
-

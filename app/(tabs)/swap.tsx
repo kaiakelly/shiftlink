@@ -1,18 +1,22 @@
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
 import { getCurrentUser, useAppStore } from '@/src/store/useAppStore';
 
 export default function SwapScreen() {
-  const session = useAppStore((s) => s.session);
   const user = useAppStore((s) => getCurrentUser(s));
-  const posts = useAppStore((s) => {
-    const all = s.entities.posts.allIds.map((id) => s.entities.posts.byId[id]).filter(Boolean);
-    if (session.isGuest || !user) return [];
-    return all.filter((p) => p.boardType === 'swap' && p.companyId === user.companyId);
-  });
+  const isGuest = useAppStore((s) => s.session.isGuest);
+  const postsEntity = useAppStore((s) => s.entities.posts);
 
-  if (session.isGuest || !user) {
+  const posts = useMemo(() => {
+    if (isGuest || !user) return [];
+    return postsEntity.allIds
+      .map((id) => postsEntity.byId[id])
+      .filter((p) => p && p.boardType === 'swap' && p.companyId === user.companyId);
+  }, [isGuest, postsEntity, user]);
+
+  if (isGuest || !user) {
     return (
       <View className="flex-1 bg-background px-4 py-6">
         <Text className="text-foreground text-2xl font-semibold">換班牆</Text>
