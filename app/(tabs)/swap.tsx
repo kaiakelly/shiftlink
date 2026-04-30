@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 
 import { getCurrentUser, useAppStore } from '@/src/store/useAppStore';
 
@@ -30,8 +30,15 @@ export default function SwapScreen() {
 
   return (
     <View className="flex-1 bg-background px-4 py-6">
-      <Text className="text-foreground text-2xl font-semibold">換班牆</Text>
-      <Text className="text-muted-foreground mt-2">只顯示與你同公司之帖子</Text>
+      <View className="flex-row items-center justify-between">
+        <View>
+          <Text className="text-foreground text-2xl font-semibold">換班牆</Text>
+          <Text className="text-muted-foreground mt-2">只顯示與你同公司之帖子</Text>
+        </View>
+        <Pressable className="bg-primary rounded-xl px-4 py-3" onPress={() => router.push({ pathname: '/(modals)/create-post', params: { boardType: 'swap' } } as any)}>
+          <Text className="text-primary-foreground font-semibold">發帖</Text>
+        </Pressable>
+      </View>
 
       <FlatList
         data={posts}
@@ -40,8 +47,18 @@ export default function SwapScreen() {
         ItemSeparatorComponent={() => <View className="h-3" />}
         renderItem={({ item }) => (
           <View className="bg-card rounded-2xl p-4">
-            <Text className="text-foreground font-semibold">{item.title}</Text>
+            <View className="flex-row items-start justify-between">
+              <Text className="text-foreground font-semibold flex-1 pr-3">{item.title}</Text>
+              <Pressable onPress={() => Alert.alert('檢舉', 'MVP 先預留入口，稍後會接入。')}>
+                <Text className="text-muted-foreground font-semibold">⋯</Text>
+              </Pressable>
+            </View>
             <Text className="text-muted-foreground mt-1">{item.content}</Text>
+          </View>
+        )}
+        ListEmptyComponent={() => (
+          <View className="mt-8">
+            <Text className="text-muted-foreground text-center">暫時未有帖子</Text>
           </View>
         )}
       />

@@ -3,6 +3,7 @@ import type {
   Company,
   EntityState,
   Message,
+  MonthSave,
   Position,
   Post,
   Shift,
@@ -31,6 +32,7 @@ export type SeedData = {
   skills: EntityState<Skill>;
   shiftTypes: EntityState<ShiftType>;
   shifts: EntityState<Shift>;
+  monthSaves: EntityState<MonthSave>;
   posts: EntityState<Post>;
   threads: EntityState<Thread>;
   messages: EntityState<Message>;
@@ -79,11 +81,11 @@ export function buildSeedData(): SeedData {
   ];
 
   const shiftTypes: ShiftType[] = [
-    { id: 'shift_early', name: '早班', shortName: '早', colorTag: 'emerald', createdAt },
-    { id: 'shift_mid', name: '中班', shortName: '中', colorTag: 'sky', createdAt },
-    { id: 'shift_late', name: '晚班', shortName: '晚', colorTag: 'violet', createdAt },
-    { id: 'shift_topup', name: '頂班', shortName: '頂', colorTag: 'amber', createdAt },
-    { id: 'shift_off', name: '假期', shortName: '假', colorTag: 'zinc', createdAt },
+    { id: 'shift_early', name: '早班', shortName: '早', colorTag: 'emerald', isOvernight: false, createdAt },
+    { id: 'shift_mid', name: '中班', shortName: '中', colorTag: 'sky', isOvernight: false, createdAt },
+    { id: 'shift_late', name: '晚班', shortName: '晚', colorTag: 'violet', isOvernight: false, createdAt },
+    { id: 'shift_topup', name: '頂班', shortName: '頂', colorTag: 'amber', isOvernight: false, createdAt },
+    { id: 'shift_off', name: '假期', shortName: '假', colorTag: 'zinc', isOvernight: false, createdAt },
   ];
 
   const password = '112211';
@@ -99,6 +101,7 @@ export function buildSeedData(): SeedData {
       positionId: '',
       skillIds: [],
       isVip: true,
+      isMuted: false,
       createdAt,
     },
     {
@@ -111,6 +114,7 @@ export function buildSeedData(): SeedData {
       positionId: 'pos_dealer_galaxy',
       skillIds: ['skill_baccarat', 'skill_sicbo'],
       isVip: true,
+      isMuted: false,
       createdAt,
     },
     {
@@ -123,6 +127,7 @@ export function buildSeedData(): SeedData {
       positionId: 'pos_fnb_galaxy',
       skillIds: ['skill_service'],
       isVip: false,
+      isMuted: false,
       createdAt,
     },
     {
@@ -135,6 +140,7 @@ export function buildSeedData(): SeedData {
       positionId: 'pos_dealer_venetian',
       skillIds: ['skill_blackjack'],
       isVip: false,
+      isMuted: false,
       createdAt,
     },
     {
@@ -147,6 +153,7 @@ export function buildSeedData(): SeedData {
       positionId: 'pos_security_mgm',
       skillIds: ['skill_patrol'],
       isVip: false,
+      isMuted: false,
       createdAt,
     },
     {
@@ -159,6 +166,7 @@ export function buildSeedData(): SeedData {
       positionId: 'pos_security_wynn',
       skillIds: ['skill_crowd'],
       isVip: true,
+      isMuted: false,
       createdAt,
     },
     {
@@ -171,6 +179,7 @@ export function buildSeedData(): SeedData {
       positionId: 'pos_dealer_mgm',
       skillIds: ['skill_roulette'],
       isVip: false,
+      isMuted: false,
       createdAt,
     },
   ];
@@ -215,9 +224,9 @@ export function buildSeedData(): SeedData {
     skills: makeEntityState(skills),
     shiftTypes: makeEntityState(shiftTypes),
     shifts: makeEntityState([]),
+    monthSaves: makeEntityState([]),
     posts: makeEntityState([...squarePosts, ...swapPosts]),
     threads: makeEntityState([]),
     messages: makeEntityState([]),
   };
 }
-

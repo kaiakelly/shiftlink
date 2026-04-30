@@ -34,9 +34,14 @@ export default function ProfileScreen() {
             <Text className="text-primary-foreground font-semibold">去登入</Text>
           </Pressable>
         ) : (
-          <Pressable className="bg-destructive rounded-xl px-4 py-3" onPress={() => useAppStore.getState().actions.logout()}>
-            <Text className="text-destructive-foreground font-semibold">登出</Text>
-          </Pressable>
+          <>
+            <Pressable className="bg-card rounded-xl px-4 py-3" onPress={() => router.push('/(tabs)/shift-types' as any)}>
+              <Text className="text-foreground font-semibold">班次設定</Text>
+            </Pressable>
+            <Pressable className="bg-destructive rounded-xl px-4 py-3" onPress={() => useAppStore.getState().actions.logout()}>
+              <Text className="text-destructive-foreground font-semibold">登出</Text>
+            </Pressable>
+          </>
         )}
       </View>
 

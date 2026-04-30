@@ -20,6 +20,7 @@ export interface User {
   positionId: ID;
   skillIds: ID[];
   isVip: boolean;
+  isMuted: boolean;
   createdAt: string;
 }
 
@@ -48,6 +49,7 @@ export interface ShiftType {
   name: string;
   shortName: string;
   colorTag: string;
+  isOvernight: boolean;
   createdAt: string;
 }
 
@@ -60,6 +62,13 @@ export interface Shift {
   emoji?: string;
   note?: string;
   updatedAt: string;
+}
+
+export interface MonthSave {
+  id: ID;
+  userId: ID;
+  month: string;
+  savedAt: string;
 }
 
 export interface Post {
@@ -102,8 +111,21 @@ export interface SwapProposal {
   status: 'pending' | 'accepted' | 'rejected';
 }
 
+export interface TransferRequest {
+  id: ID;
+  userId: ID;
+  requestedCompanyId: ID;
+  requestedPositionId: ID;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  decidedAt?: string;
+}
+
+export interface AppPreferences {
+  fontScale: number;
+}
+
 export type EntityState<T> = {
   byId: Record<ID, T>;
   allIds: ID[];
 };
-

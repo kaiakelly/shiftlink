@@ -7,6 +7,7 @@ import type {
   Company,
   EntityState,
   Message,
+  MonthSave,
   Position,
   Post,
   Shift,
@@ -32,6 +33,7 @@ export type AppEntities = {
   skills: EntityState<Skill>;
   shiftTypes: EntityState<ShiftType>;
   shifts: EntityState<Shift>;
+  monthSaves: EntityState<MonthSave>;
   posts: EntityState<Post>;
   threads: EntityState<Thread>;
   messages: EntityState<Message>;
@@ -72,6 +74,26 @@ export type CreatePostInput = {
   skillIds: string[];
 };
 
+export type SetShiftInput = {
+  date: string;
+  shiftTypeId: string;
+};
+
+export type SetShiftEmojiInput = {
+  date: string;
+  emoji: string | null;
+};
+
+export type UpdateShiftTypeInput = {
+  shiftTypeId: string;
+  name: string;
+  shortName: string;
+};
+
+export type SaveMonthInput = {
+  month: string;
+};
+
 export type AppStoreActions = {
   bootstrap: () => Promise<void>;
   login: (username: string, password: string) => AuthResult;
@@ -80,13 +102,17 @@ export type AppStoreActions = {
   completeOnboarding: (input: CompleteOnboardingInput) => void;
   updateMySkills: (skillIds: string[]) => void;
   createPost: (input: CreatePostInput) => { ok: true; postId: string } | { ok: false; error: 'AUTH_REQUIRED' };
+  setShift: (input: SetShiftInput) => { ok: true } | { ok: false; error: 'AUTH_REQUIRED' };
+  setShiftEmoji: (input: SetShiftEmojiInput) => { ok: true } | { ok: false; error: 'AUTH_REQUIRED' | 'VIP_REQUIRED' };
+  updateShiftType: (input: UpdateShiftTypeInput) => void;
+  saveMonth: (input: SaveMonthInput) => { ok: true } | { ok: false; error: 'AUTH_REQUIRED' };
   devResetNonAdmin: () => void;
 };
 
 export type AppStore = AppStoreState & { actions: AppStoreActions };
 
 const STORAGE_NAME = 'shiftlink_store_v1';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 function emptyEntityState<T>(): EntityState<T> {
   return { byId: {}, allIds: [] };
@@ -105,6 +131,7 @@ function buildInitialState(): AppStoreState {
       skills: emptyEntityState<Skill>(),
       shiftTypes: emptyEntityState<ShiftType>(),
       shifts: emptyEntityState<Shift>(),
+      monthSaves: emptyEntityState<MonthSave>(),
       posts: emptyEntityState<Post>(),
       threads: emptyEntityState<Thread>(),
       messages: emptyEntityState<Message>(),
@@ -136,6 +163,7 @@ export const useAppStore = create<AppStore>()(
               skills: seed.skills,
               shiftTypes: seed.shiftTypes,
               shifts: seed.shifts,
+              monthSaves: seed.monthSaves,
               posts: seed.posts,
               threads: seed.threads,
               messages: seed.messages,
@@ -179,6 +207,7 @@ export const useAppStore = create<AppStore>()(
             positionId: '',
             skillIds: [],
             isVip: false,
+            isMuted: false,
             createdAt,
           };
 
@@ -255,6 +284,7 @@ export const useAppStore = create<AppStore>()(
 
           const user = state.entities.users.byId[userId];
           if (!user) return { ok: false, error: 'AUTH_REQUIRED' } as const;
+          if (user.isMuted) return { ok: false, error: 'AUTH_REQUIRED' } as const;
 
           const now = nowIso();
           const postId = createId('post');
@@ -286,6 +316,124 @@ export const useAppStore = create<AppStore>()(
           return { ok: true, postId } as const;
         },
 
+        setShift: (input) => {
+          const state = get();
+          const userId = state.session.userId;
+          if (!userId) return { ok: false, error: 'AUTH_REQUIRED' } as const;
+          const user = state.entities.users.byId[userId];
+          if (!user) return { ok: false, error: 'AUTH_REQUIRED' } as const;
+
+          const shiftId = `shift_${userId}_${input.date}`;
+          const existing = state.entities.shifts.byId[shiftId];
+          const now = nowIso();
+
+          const shift: Shift = {
+            id: shiftId,
+            userId,
+            date: input.date,
+            shiftTypeId: input.shiftTypeId,
+            isOvernight: false,
+            emoji: existing?.emoji,
+            note: existing?.note,
+            updatedAt: now,
+          };
+
+          const hasId = state.entities.shifts.allIds.includes(shiftId);
+
+          set({
+            entities: {
+              ...state.entities,
+              shifts: {
+                byId: { ...state.entities.shifts.byId, [shiftId]: shift },
+                allIds: hasId ? state.entities.shifts.allIds : [shiftId, ...state.entities.shifts.allIds],
+              },
+            },
+          });
+
+          return { ok: true } as const;
+        },
+
+        setShiftEmoji: (input) => {
+          const state = get();
+          const userId = state.session.userId;
+          if (!userId) return { ok: false, error: 'AUTH_REQUIRED' } as const;
+          const user = state.entities.users.byId[userId];
+          if (!user) return { ok: false, error: 'AUTH_REQUIRED' } as const;
+          if (!user.isVip) return { ok: false, error: 'VIP_REQUIRED' } as const;
+
+          const shiftId = `shift_${userId}_${input.date}`;
+          const existing = state.entities.shifts.byId[shiftId];
+          const now = nowIso();
+          const shiftTypeId = existing?.shiftTypeId ?? 'shift_off';
+
+          const shift: Shift = {
+            id: shiftId,
+            userId,
+            date: input.date,
+            shiftTypeId,
+            isOvernight: false,
+            emoji: input.emoji ?? undefined,
+            note: existing?.note,
+            updatedAt: now,
+          };
+
+          const hasId = state.entities.shifts.allIds.includes(shiftId);
+
+          set({
+            entities: {
+              ...state.entities,
+              shifts: {
+                byId: { ...state.entities.shifts.byId, [shiftId]: shift },
+                allIds: hasId ? state.entities.shifts.allIds : [shiftId, ...state.entities.shifts.allIds],
+              },
+            },
+          });
+
+          return { ok: true } as const;
+        },
+
+        updateShiftType: (input) => {
+          const state = get();
+          const existing = state.entities.shiftTypes.byId[input.shiftTypeId];
+          if (!existing) return;
+
+          set({
+            entities: {
+              ...state.entities,
+              shiftTypes: {
+                ...state.entities.shiftTypes,
+                byId: {
+                  ...state.entities.shiftTypes.byId,
+                  [input.shiftTypeId]: { ...existing, name: input.name, shortName: input.shortName },
+                },
+              },
+            },
+          });
+        },
+
+        saveMonth: (input) => {
+          const state = get();
+          const userId = state.session.userId;
+          if (!userId) return { ok: false, error: 'AUTH_REQUIRED' } as const;
+
+          const id = `month_${userId}_${input.month}`;
+          const savedAt = nowIso();
+          const monthSave: MonthSave = { id, userId, month: input.month, savedAt };
+          const hasId = state.entities.monthSaves.allIds.includes(id);
+
+          set({
+            entities: {
+              ...state.entities,
+              monthSaves: {
+                byId: { ...state.entities.monthSaves.byId, [id]: monthSave },
+                allIds: hasId ? state.entities.monthSaves.allIds : [id, ...state.entities.monthSaves.allIds],
+              },
+            },
+          });
+
+          return { ok: true } as const;
+        },
+
         devResetNonAdmin: () => {
           const state = get();
           const userId = state.session.userId;
@@ -309,10 +457,43 @@ export const useAppStore = create<AppStore>()(
         const incoming = persisted as AppStoreState;
         if (!incoming) return buildInitialState();
         if (version === SCHEMA_VERSION) return incoming;
+
+        const base = buildInitialState();
+        const entities = incoming.entities ?? base.entities;
+
+        const usersById: Record<string, User> = {};
+        for (const id of entities.users.allIds ?? []) {
+          const u = entities.users.byId[id];
+          if (!u) continue;
+          usersById[id] = { ...u, isMuted: (u as any).isMuted ?? false };
+        }
+
+        const shiftTypesById: Record<string, ShiftType> = {};
+        for (const id of entities.shiftTypes.allIds ?? []) {
+          const st = entities.shiftTypes.byId[id];
+          if (!st) continue;
+          shiftTypesById[id] = { ...st, isOvernight: false };
+        }
+
+        const shiftsById: Record<string, Shift> = {};
+        for (const id of entities.shifts.allIds ?? []) {
+          const s = entities.shifts.byId[id];
+          if (!s) continue;
+          shiftsById[id] = { ...s, isOvernight: false };
+        }
+
         return {
-          ...buildInitialState(),
+          ...base,
           ...incoming,
           meta: { schemaVersion: SCHEMA_VERSION, hasSeeded: incoming.meta?.hasSeeded ?? false },
+          entities: {
+            ...base.entities,
+            ...entities,
+            users: { byId: usersById, allIds: entities.users.allIds ?? [] },
+            shiftTypes: { byId: shiftTypesById, allIds: entities.shiftTypes.allIds ?? [] },
+            shifts: { byId: shiftsById, allIds: entities.shifts.allIds ?? [] },
+            monthSaves: (entities as any).monthSaves ?? base.entities.monthSaves,
+          },
         };
       },
     },
