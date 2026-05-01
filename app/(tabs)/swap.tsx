@@ -8,6 +8,7 @@ export default function SwapScreen() {
   const user = useAppStore((s) => getCurrentUser(s));
   const isGuest = useAppStore((s) => s.session.isGuest);
   const postsEntity = useAppStore((s) => s.entities.posts);
+  const usersById = useAppStore((s) => s.entities.users.byId);
 
   const posts = useMemo(() => {
     if (isGuest || !user) return [];
@@ -15,6 +16,15 @@ export default function SwapScreen() {
       .map((id) => postsEntity.byId[id])
       .filter((p) => p && p.boardType === 'swap' && p.companyId === user.companyId);
   }, [isGuest, postsEntity, user]);
+
+  const startChat = (authorId: string) => {
+    if (!user) return;
+    if (authorId === user.id) return;
+    const result = useAppStore.getState().actions.startThread({ peerUserId: authorId });
+    if (result.ok) {
+      router.push({ pathname: '/(chat)/thread/[threadId]', params: { threadId: result.threadId } } as any);
+    }
+  };
 
   if (isGuest || !user) {
     return (
@@ -45,17 +55,25 @@ export default function SwapScreen() {
         keyExtractor={(item) => item.id}
         className="mt-4"
         ItemSeparatorComponent={() => <View className="h-3" />}
-        renderItem={({ item }) => (
-          <View className="bg-card rounded-2xl p-4">
-            <View className="flex-row items-start justify-between">
-              <Text className="text-foreground font-semibold flex-1 pr-3">{item.title}</Text>
-              <Pressable onPress={() => Alert.alert('檢舉', 'MVP 先預留入口，稍後會接入。')}>
-                <Text className="text-muted-foreground font-semibold">⋯</Text>
+        renderItem={({ item }) => {
+          const author = usersById[item.authorId];
+          return (
+            <View className="bg-card rounded-2xl p-4">
+              <View className="flex-row items-start justify-between">
+                <Text className="text-foreground font-semibold flex-1 pr-3">{item.title}</Text>
+                <Pressable onPress={() => Alert.alert('檢舉', 'MVP 先預留入口，稍後會接入。')}>
+                  <Text className="text-muted-foreground font-semibold">⋯</Text>
+                </Pressable>
+              </View>
+              <Text className="text-muted-foreground mt-1">{item.content}</Text>
+              <Pressable className="mt-2" onPress={() => startChat(item.authorId)}>
+                <Text className="text-muted-foreground text-xs">
+                  {author?.displayName ?? author?.username ?? ''} {author?.id === user.id ? '' : '· 私訊'}
+                </Text>
               </Pressable>
             </View>
-            <Text className="text-muted-foreground mt-1">{item.content}</Text>
-          </View>
-        )}
+          );
+        }}
         ListEmptyComponent={() => (
           <View className="mt-8">
             <Text className="text-muted-foreground text-center">暫時未有帖子</Text>

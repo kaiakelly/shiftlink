@@ -36,7 +36,9 @@ export default function CalendarScreen() {
   const cells = useMemo(() => buildMonthGrid(monthStart), [monthKey]);
 
   const shiftTypes = useMemo(() => {
-    return shiftTypesEntity.allIds.map((id) => shiftTypesEntity.byId[id]).filter(Boolean);
+    return shiftTypesEntity.allIds
+      .map((id) => shiftTypesEntity.byId[id])
+      .filter((st) => st && st.id !== 'shift_none');
   }, [shiftTypesEntity]);
 
   const shiftTypeById = useMemo(() => {
@@ -120,15 +122,24 @@ export default function CalendarScreen() {
     if (!result.ok && result.error === 'VIP_REQUIRED') {
       Alert.alert('需要 VIP', 'VIP 才可以設定每日 emoji。');
     }
+    if (result.ok) {
+      advanceFocus();
+    }
+  };
+
+  const onClearShift = () => {
+    const result = useAppStore.getState().actions.clearShift({ date: focusedDate });
+    if (!result.ok) router.push('/(auth)/login');
+    if (result.ok) advanceFocus();
   };
 
   const onSaveMonth = () => {
+    if (!isMonthDirty) return;
     const result = useAppStore.getState().actions.saveMonth({ month: monthKey });
     if (!result.ok) {
       router.push('/(auth)/login');
       return;
     }
-    Alert.alert('已儲存', `${monthLabel(monthStart)} 已儲存。`);
   };
 
   if (isGuest) {
@@ -170,9 +181,9 @@ export default function CalendarScreen() {
           {cells.map((cell) => {
             const isFocused = cell.date === focusedDate;
             const shift = user ? shiftsByDate[cell.date] : undefined;
-            const shiftType = shift ? shiftTypeById[shift.shiftTypeId] : undefined;
+            const shiftType = shift && shift.shiftTypeId !== 'shift_none' ? shiftTypeById[shift.shiftTypeId] : undefined;
             const badge = shiftType ? shiftColor[shiftType.colorTag] : undefined;
-            const isDirtyCell = isMonthDirty && cell.date.startsWith(`${monthKey}-`) && !!shift;
+            const borderCls = isFocused ? 'border-primary' : 'border-transparent';
 
             return (
               <Pressable
@@ -180,7 +191,7 @@ export default function CalendarScreen() {
                 style={{ width: `${100 / 7}%` }}
                 onPress={() => setFocusedDate(cell.date)}
                 className="p-1">
-                <View className={isFocused ? 'border border-primary rounded-xl bg-card p-2' : 'rounded-xl bg-card p-2'}>
+                <View className={`rounded-xl bg-card p-2 border ${borderCls}`}>
                   <Text className={cell.inMonth ? 'text-foreground text-xs' : 'text-muted-foreground text-xs'}>{cell.day}</Text>
                   {shiftType ? (
                     <View className="mt-1 flex-row items-center justify-between">
@@ -192,7 +203,6 @@ export default function CalendarScreen() {
                   ) : (
                     <View className="mt-1 h-5" />
                   )}
-                  {isDirtyCell ? <View className="mt-1 h-1 w-1 self-end rounded-full bg-primary" /> : null}
                 </View>
               </Pressable>
             );
@@ -204,7 +214,9 @@ export default function CalendarScreen() {
         <View className="flex-row items-center justify-between">
           <Text className="text-foreground font-semibold">{focusedDate}</Text>
           <Pressable className={isMonthDirty ? 'bg-primary rounded-xl px-4 py-2' : 'bg-card rounded-xl px-4 py-2'} onPress={onSaveMonth}>
-            <Text className={isMonthDirty ? 'text-primary-foreground font-semibold' : 'text-foreground font-semibold'}>儲存整月</Text>
+            <Text className={isMonthDirty ? 'text-primary-foreground font-semibold' : 'text-foreground font-semibold'}>
+              {isMonthDirty ? '儲存' : '已儲存'}
+            </Text>
           </Pressable>
         </View>
 
@@ -217,6 +229,12 @@ export default function CalendarScreen() {
               </Pressable>
             );
           })}
+          <Pressable
+            className={shiftsByDate[focusedDate] && shiftsByDate[focusedDate]?.shiftTypeId !== 'shift_none' ? 'bg-card rounded-xl px-3 py-2' : 'bg-card rounded-xl px-3 py-2 opacity-50'}
+            disabled={!shiftsByDate[focusedDate] || shiftsByDate[focusedDate]?.shiftTypeId === 'shift_none'}
+            onPress={onClearShift}>
+            <Text className="text-muted-foreground font-semibold">🗑</Text>
+          </Pressable>
         </View>
 
         {user?.isVip ? (

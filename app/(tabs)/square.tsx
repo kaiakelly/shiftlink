@@ -17,6 +17,19 @@ export default function SquareScreen() {
       .filter((p) => p && p.boardType === 'square');
   }, [postsEntity]);
 
+  const startChat = (authorId: string) => {
+    if (isGuest) {
+      router.push('/(auth)/login');
+      return;
+    }
+    if (!user) return;
+    if (authorId === user.id) return;
+    const result = useAppStore.getState().actions.startThread({ peerUserId: authorId });
+    if (result.ok) {
+      router.push({ pathname: '/(chat)/thread/[threadId]', params: { threadId: result.threadId } } as any);
+    }
+  };
+
   return (
     <View className="flex-1 bg-background px-4 py-6">
       <View className="flex-row items-center justify-between">
@@ -48,9 +61,11 @@ export default function SquareScreen() {
                 </Pressable>
               </View>
               <Text className="text-muted-foreground mt-1">{item.content}</Text>
-              <Text className="text-muted-foreground mt-2 text-xs">
-                {author?.displayName ?? author?.username ?? ''} · {company?.name ?? ''}
-              </Text>
+              <Pressable className="mt-2" onPress={() => startChat(item.authorId)}>
+                <Text className="text-muted-foreground text-xs">
+                  {author?.displayName ?? author?.username ?? ''} · {company?.name ?? ''} {isGuest ? '' : '· 私訊'}
+                </Text>
+              </Pressable>
             </View>
           );
         }}

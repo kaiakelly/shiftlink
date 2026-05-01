@@ -1,6 +1,9 @@
-import { vars } from 'nativewind';
+import { rem, vars } from 'nativewind';
 import type { PropsWithChildren } from 'react';
+import { useEffect } from 'react';
 import { useColorScheme, View } from 'react-native';
+
+import { useAppStore } from '@/src/store/useAppStore';
 
 const lightVars = {
   '--background': 'hsl(0, 0%, 100%)',
@@ -29,6 +32,11 @@ const darkVars = {
 export function AppThemeProvider({ children }: PropsWithChildren) {
   const scheme = useColorScheme();
   const themeVars = scheme === 'dark' ? darkVars : lightVars;
+  const fontScale = useAppStore((s) => s.preferences.fontScale);
+
+  useEffect(() => {
+    rem.set(14 * fontScale);
+  }, [fontScale]);
 
   return (
     <View style={vars(themeVars)} className="flex-1 bg-background">

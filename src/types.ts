@@ -1,3 +1,5 @@
+import type { EcaiPersona } from '@/src/ecai/types';
+
 export type ID = string;
 
 export type UserRole = 'user' | 'admin';
@@ -109,6 +111,7 @@ export interface SwapProposal {
   fromDate: string;
   toDate: string;
   status: 'pending' | 'accepted' | 'rejected';
+  appliedAt?: string;
 }
 
 export interface TransferRequest {
@@ -123,6 +126,9 @@ export interface TransferRequest {
 
 export interface AppPreferences {
   fontScale: number;
+  ecai: {
+    customPersonas: EcaiPersona[];
+  };
 }
 
 export type EntityState<T> = {

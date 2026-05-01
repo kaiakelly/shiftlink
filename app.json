@@ -14,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "需要相機權限以拍攝照片並發送到私訊。",
+        "NSPhotoLibraryUsageDescription": "需要相簿權限以選取照片並發送到私訊。"
+      }
     },
     "android": {
       "adaptiveIcon": {

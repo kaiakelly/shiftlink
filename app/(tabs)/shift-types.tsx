@@ -9,7 +9,9 @@ export default function ShiftTypesScreen() {
   const shiftTypesEntity = useAppStore((s) => s.entities.shiftTypes);
 
   const items = useMemo(() => {
-    return shiftTypesEntity.allIds.map((id) => shiftTypesEntity.byId[id]).filter(Boolean);
+    return shiftTypesEntity.allIds
+      .map((id) => shiftTypesEntity.byId[id])
+      .filter((st) => st && st.id !== 'shift_none');
   }, [shiftTypesEntity]);
 
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
@@ -30,6 +32,11 @@ export default function ShiftTypesScreen() {
       return;
     }
     useAppStore.getState().actions.updateShiftType({ shiftTypeId: id, name: nextName, shortName: nextShort });
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   };
 
   return (
@@ -66,4 +73,3 @@ export default function ShiftTypesScreen() {
     </View>
   );
 }
-

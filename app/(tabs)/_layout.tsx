@@ -55,6 +55,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="shift-types"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

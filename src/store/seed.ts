@@ -81,6 +81,7 @@ export function buildSeedData(): SeedData {
   ];
 
   const shiftTypes: ShiftType[] = [
+    { id: 'shift_none', name: '清空', shortName: '', colorTag: 'zinc', isOvernight: false, createdAt },
     { id: 'shift_early', name: '早班', shortName: '早', colorTag: 'emerald', isOvernight: false, createdAt },
     { id: 'shift_mid', name: '中班', shortName: '中', colorTag: 'sky', isOvernight: false, createdAt },
     { id: 'shift_late', name: '晚班', shortName: '晚', colorTag: 'violet', isOvernight: false, createdAt },
