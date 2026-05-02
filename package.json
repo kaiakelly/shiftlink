@@ -7,6 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "ecai:web": "HOME=./.home CI=0 expo start --web --port 0 --localhost",
     "ecai:mock-server": "node ./scripts/ecai-mock-server.mjs"
   },
   "dependencies": {
